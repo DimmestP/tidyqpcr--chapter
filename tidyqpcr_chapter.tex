@@ -26,7 +26,15 @@ This chapter introduces open-source software practices, community development an
 
 \end{abstract}
 
-\section{CASE STUDY: qPCR Analysis pipeline}
+\section{Chapter 3 Introduction}
+
+\section{Chapter 3 Results}
+
+qPCR machines are susceptible to multiple systematic biases. Positional effects can be a significant contribution to measured expression. Edge wells may be more likely to have some of their liquid evaporate away. Multichanel pipettes may consistently output lower/higher volumes out of sepcific tips. Thermal gradients may be uneven across the plate. Therefore, grouping biological/technical replicates so they are place in the neighbouring wells could lead to systematic effects confounding biological effects. This can compound even further if the same samples are place in the similar positions across multiple different wells. In an ideal situation, different samples and their replicates should be allocated entirely random well positions. However, if the sample loading is manual then having inconsistent loading plans across plates can lead to incorrect loading; i.e. the wrong sample in the wrong well. Ultimately, having an incorrect map of samples in wells is significantly more detrimental to any analysis than systematic bias. A balance between easy loading and good experimental design principles are required. In tidyqpcr, we have built several plate plan helper functions built around block designs. This enables samples to be spread across the plate and minimise well position biases but still contain regular patterns for loading with multi-channel pipettes. We also describe in detail different plate design strategies than user can explore depending on their particular pipettes and plates. Users can exclude loading samples into edge wells with the provided helper functions. We are also exploring introducing automatic generation of loading recipes for common liquid handlers so users with the access to the appropriate equipment can ensure the loader and plate plan match identically.
+
+% Q. Liu and M. Markatou, 2016, Evaluation of Methods in Removing Batch Effects on RNA-seq Data, Infectious Diseases and Translational Medicine
+
+% Schurch et al, 2016 many replicate RNA sequencing
 
 \subsection{Quantitative PCR}
 
@@ -148,9 +156,5 @@ We have conducted a series of user interviews to improve tidyqpcr's capabilities
     \item Highlighted issues with accessing internal package data sets and suggested fix.
     \item Enhanced comparison of tidyqpcr functionality with other available packages.
 \end{itemize}
-
-
-\bibliographystyle{apalike}
-\bibliography{sbc-template}
 
 \end{document}
