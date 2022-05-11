@@ -30,6 +30,28 @@ This chapter explores the development and improvement of an open source R packag
 
 \section{Chapter 3 Results}
 
+\subsection{Theme derived from semi-structured interviews}
+The six interviewees varied from experienced post-doctoral research assistants to undergraduates with experience in both both programming and conducting qPCR assays varying from novice to expert.
+Excel remains a common piece of software for the analysis of qPCR results and design of plates.
+The awareness of MIQE guidelines is remains relatively unknown.
+Users almost universally depend on qPCR machine software to determine qc values.
+Very few interviewees recall published data giving QC results, analysis code or detailed protocols.
+Commonly three replicates are used although some users remove outliers but some do not.
+Not everyone checks amplification curves or confirms linear efficiency.
+Although most users are confident they could re-analysis their own results no-one reported that their analysis was openly available for reviewers to reader to use with requesting access.
+Users all reported doing RNA not DNA quantification.
+Few had attempted to recreate any other published data set but despite qPCR being considered a "gold standard" in nucleotide quantification a regular theme of not trusting conclusions based on qPCR results alone was common. 
+Few were aware of the concept of 'tidy' data outside of users already using R packages  based on the tidyverse.
+
+\begin{figure}[t]
+
+{\centering \includegraphics[width=0.5\linewidth]{figures/mg_rb_ck_ec_db_semi_structured_word_cloud} 
+
+}
+
+\caption{\textbf{A text cloud showing the key words repeatedly used across the semi-structured interviews.} The greater the frequency of a word the larger it appears in the figure. }\label{fig:semi-structured-test-cloud}
+\end{figure}
+
 qPCR machines are susceptible to multiple systematic biases. Positional effects can be a significant contribution to measured expression. Edge wells may be more likely to have some of their liquid evaporate away. Multichanel pipettes may consistently output lower/higher volumes out of sepcific tips. Thermal gradients may be uneven across the plate. Therefore, grouping biological/technical replicates so they are place in the neighbouring wells could lead to systematic effects confounding biological effects. This can compound even further if the same samples are place in the similar positions across multiple different wells. In an ideal situation, different samples and their replicates should be allocated entirely random well positions. However, if the sample loading is manual then having inconsistent loading plans across plates can lead to incorrect loading; i.e. the wrong sample in the wrong well. Ultimately, having an incorrect map of samples in wells is significantly more detrimental to any analysis than systematic bias. A balance between easy loading and good experimental design principles are required. In tidyqpcr, we have built several plate plan helper functions built around block designs. This enables samples to be spread across the plate and minimise well position biases but still contain regular patterns for loading with multi-channel pipettes. We also describe in detail different plate design strategies than user can explore depending on their particular pipettes and plates. Users can exclude loading samples into edge wells with the provided helper functions. We are also exploring introducing automatic generation of loading recipes for common liquid handlers so users with the access to the appropriate equipment can ensure the loader and plate plan match identically.
 
 % Q. Liu and M. Markatou, 2016, Evaluation of Methods in Removing Batch Effects on RNA-seq Data, Infectious Diseases and Translational Medicine
