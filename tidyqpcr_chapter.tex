@@ -28,6 +28,13 @@ This chapter explores the development and improvement of an open source R packag
 
 \section{Chapter 3 Introduction}
 
+The limitations of qPCR experiments have been widely reported but the same mistakes keep being made \cite{Burns2005}. In an effort to combat poor practices a team of qPCR experts created advice for publishing qPCR results (and implicitly the design of experiments) called the Minimum Information for the Publication of Quantitative Real-Time PCR Experiments (MIQE) guidelines \cite{Bustin2009}. They provide a thorough checklist of every detail that needs to be reported in order to enable another researcher to accurately repeat your work. Over time they even developed their own markup language, the Real-Time PCR Data Markup Language or RDML, to standardise the way scientists describe their experiments which users can upload to a bespoke open source database \cite{Lefever2009, Ruijter2015}.
+However, the guidelines have been around for 11 years but they are still not widely implemented or known about, with as little as $4\%$ of qPCR articles citing them \cite{AbdelNour2020}.
+
+In order to encourage the adoption of MIQE best practices across the analysis pipeline we have developed tidyqpcr, an R package that helps users create publication ready figures of normalised qPCR results straight from raw data. tidyqpcr packages the lessons outlined in the MIQE guidelines for the easy design, analysis and reporting of reproducible and accurate qPCR results. Well documented functions and intuitive structure help experts encapsulate required meta-data to enable reproducible research without depending on checklists. It has built in walkthroughs to enable PCR novices to learn qPCR design and analysis from best practices. We follow the FAIR principles - Findable, Accessible, Interoperable, and Reusable, to ensure every stage of the analysis is transparent and verifiable. tidyqpcr is available to use now and can be downloaded from our GitHub page, https://github.com/ewallace/tidyqpcr. We continue to add functionality to tidyqpcr in order to process data from a variety of qPCR assays and machines.
+
+In this body of work, I describe the current available software for analysing qPCR data and setup the niche that tidyqcr successfully fills. I start my summarising a series of interviews with prospective users either experienced in qPCR experiments or beginning to conduct some. After showcasing the continued lack of reproducibility and quality control that is already outlined in the literature, I describe the current software packages available across several platforms. I then detail how the development of tidyqpcr has been focused on the possibility of using software development best practices to encourage the use of experimental best practices. Finally, I discuss how a series of user interviews have improved the usability and functionality of tidyqcr. I conclude with outline of the future of tidyqpcr and how it offers a solution to reproducibility and lessons learnt for the development of other research software. 
+
 \section{Chapter 3 Results}
 
 \subsection{Theme derived from semi-structured interviews}
@@ -51,14 +58,6 @@ Few were aware of the concept of 'tidy' data outside of users already using R pa
 
 \caption{\textbf{A text cloud showing the key words repeatedly used across the semi-structured interviews.} The greater the frequency of a word the larger it appears in the figure. }\label{fig:semi-structured-test-cloud}
 \end{figure}
-
-qPCR machines are susceptible to multiple systematic biases. Positional effects can be a significant contribution to measured expression. Edge wells may be more likely to have some of their liquid evaporate away. Multichanel pipettes may consistently output lower/higher volumes out of sepcific tips. Thermal gradients may be uneven across the plate. Therefore, grouping biological/technical replicates so they are place in the neighbouring wells could lead to systematic effects confounding biological effects. This can compound even further if the same samples are place in the similar positions across multiple different wells. In an ideal situation, different samples and their replicates should be allocated entirely random well positions. However, if the sample loading is manual then having inconsistent loading plans across plates can lead to incorrect loading; i.e. the wrong sample in the wrong well. Ultimately, having an incorrect map of samples in wells is significantly more detrimental to any analysis than systematic bias. A balance between easy loading and good experimental design principles are required. In tidyqpcr, we have built several plate plan helper functions built around block designs. This enables samples to be spread across the plate and minimise well position biases but still contain regular patterns for loading with multi-channel pipettes. We also describe in detail different plate design strategies than user can explore depending on their particular pipettes and plates. Users can exclude loading samples into edge wells with the provided helper functions. We are also exploring introducing automatic generation of loading recipes for common liquid handlers so users with the access to the appropriate equipment can ensure the loader and plate plan match identically.
-
-% Q. Liu and M. Markatou, 2016, Evaluation of Methods in Removing Batch Effects on RNA-seq Data, Infectious Diseases and Translational Medicine
-
-% Schurch et al, 2016 many replicate RNA sequencing
-
-\subsection{Quantitative PCR}
 
 \subsection{Comparing current qPCR analysis software}
 
@@ -130,6 +129,12 @@ Our package, tidyqpcr, addresses the need for a qPCR analysis package that fully
 \subsubsection{tidyqpcr functionality}
 
 tidyqpcr can be used to analyse qPCR data from any nucleic acid source - DNA for qPCR or ChIP-qPCR, RNA for RT-qPCR. Currently tidyqpcr has functions that explicitly support relative quantification by the $\Delta Cq$ method, but not yet absolute quantification.
+
+qPCR machines are susceptible to multiple systematic biases. Positional effects can be a significant contribution to measured expression. Edge wells may be more likely to have some of their liquid evaporate away. Multichanel pipettes may consistently output lower/higher volumes out of sepcific tips. Thermal gradients may be uneven across the plate. Therefore, grouping biological/technical replicates so they are place in the neighbouring wells could lead to systematic effects confounding biological effects. This can compound even further if the same samples are place in the similar positions across multiple different wells. In an ideal situation, different samples and their replicates should be allocated entirely random well positions. However, if the sample loading is manual then having inconsistent loading plans across plates can lead to incorrect loading; i.e. the wrong sample in the wrong well. Ultimately, having an incorrect map of samples in wells is significantly more detrimental to any analysis than systematic bias. A balance between easy loading and good experimental design principles are required. In tidyqpcr, we have built several plate plan helper functions built around block designs. This enables samples to be spread across the plate and minimise well position biases but still contain regular patterns for loading with multi-channel pipettes. We also describe in detail different plate design strategies than user can explore depending on their particular pipettes and plates. Users can exclude loading samples into edge wells with the provided helper functions. We are also exploring introducing automatic generation of loading recipes for common liquid handlers so users with the access to the appropriate equipment can ensure the loader and plate plan match identically.
+
+% Q. Liu and M. Markatou, 2016, Evaluation of Methods in Removing Batch Effects on RNA-seq Data, Infectious Diseases and Translational Medicine
+
+% Schurch et al, 2016 many replicate RNA sequencing
 
 \begin{itemize}
     \item use a single data type for analysis as every object is a tibble / data frame.
