@@ -130,11 +130,25 @@ Our package, tidyqpcr, addresses the need for a qPCR analysis package that fully
 
 tidyqpcr can be used to analyse qPCR data from any nucleic acid source - DNA for qPCR or ChIP-qPCR, RNA for RT-qPCR. Currently tidyqpcr has functions that explicitly support relative quantification by the $\Delta Cq$ method, but not yet absolute quantification.
 
-\subsection{Experimental experimental design}
+
+\subsection{Flexible and scalable analysis}
+
+tidy data paradigm is an attempt to balance the requirements of machine readability and human readability in the tasks of data analysis. Consisting predominantly of shaping all data such that each column is a variable and a row is an observation, otherwise known as long format. Unfortunately, data in wild often is organised in a wide format with observations and variables being spread across columns. An example would be counting the number of customers entering different shops on high street over a week. The columns in the survey might be: Week day, Deli, Bookshop, Bar and toy shop. Then each element in the table would be the counts of customers in each shop on each day. However, this wide format prioritises human readability over machine readability with an intrinsic grouping to the counts variable that may require some thought to unpick. For easier programmatic analysis, there are three variables: day, shop, and count so there should only be three columns. Creating data structures without intrinsic grouping opens the door to more flexible analysis as the tools you use dont have to be creating to account for this structure. Ensuring all functions input and output data in a wide ungrouped form enables the development of a suite of scalable and domain agnostic tools for the exploration, presentation and analysis of data. Inside the R programming language, the primary developers, RStudio, have pioneered the use of tidy analysis and created the tidyverse suite of packages to collate useful functions. Mimicking the tidy structure in the creation of tidyqpcr not only opens the way to flexible analysis enabled by simply following the tidy data paradigm, it also directly allows access to a plethora of open-access and scalable data analysis tools already created in the tidyverse. Once users familiarise themselves with the tidy paradigm, they can conduct advanced downstream analysis such as linear analysis, complex visualisation and statistical summarise. can scale upto 1534 wells 
+
+\begin{figure}[t]
+
+{\centering \includegraphics[width=0.8\linewidth]{figures/tidyverse_ecosystem} 
+
+}
+
+\caption{\textbf{Developing tidyqpcr using the tidyverse packages grants access to a larger ecosystem of data analysis packages.}}\label{fig:tidyverse_ecosystem}
+\end{figure}
+
+\subsection{Experimental design}
 
 qPCR machines are susceptible to multiple systematic biases. Positional effects can be a significant contribution to measured expression. Edge wells may be more likely to have some of their liquid evaporate away. Multichanel pipettes may consistently output lower/higher volumes out of sepcific tips. Thermal gradients may be uneven across the plate. Therefore, grouping biological/technical replicates so they are place in the neighbouring wells could lead to systematic effects confounding biological effects. This can compound even further if the same samples are place in the similar positions across multiple different wells. In an ideal situation, different samples and their replicates should be allocated entirely random well positions. However, if the sample loading is manual then having inconsistent loading plans across plates can lead to incorrect loading; i.e. the wrong sample in the wrong well. Ultimately, having an incorrect map of samples in wells is significantly more detrimental to any analysis than systematic bias. A balance between easy loading and good experimental design principles are required. In tidyqpcr, we have built several plate plan helper functions built around block designs. This enables samples to be spread across the plate and minimise well position biases but still contain regular patterns for loading with multi-channel pipettes. We also describe in detail different plate design strategies than user can explore depending on their particular pipettes and plates. Users can exclude loading samples into edge wells with the provided helper functions. We are also exploring introducing automatic generation of loading recipes for common liquid handlers so users with the access to the appropriate equipment can ensure the loader and plate plan match identically.
 
-\begin{figure}[t]
+\begin{figure}[H]
 
 {\centering \includegraphics[width=1\linewidth]{figures/combined_plate_plans.png} 
 
@@ -147,14 +161,10 @@ qPCR machines are susceptible to multiple systematic biases. Positional effects 
 
 % Schurch et al, 2016 many replicate RNA sequencing
 
-\subsection{Flexible and scalable analysis}
-
-tidy data paradigm is an attempt to balance the requirements of machine readability and human readability in the tasks of data analysis. Consisting predominantly of shaping all data such that each column is a variable and a row is an observation, otherwise known as long format. Unfortunately, data in wild often is organised in a wide format with observations and variables being spread across columns. An example would be counting the number of customers entering different shops on high street over a week. The columns in the survey might be: Week day, Deli, Bookshop, Bar and toy shop. Then each element in the table would be the counts of customers in each shop on each day. However, this wide format prioritises human readability over machine readability with an intrinsic grouping to the counts variable that may require some thought to unpick. For easier programmatic analysis, there are three variables: day, shop, and count so there should only be three columns. Creating data structures without intrinsic grouping opens the door to more flexible analysis as the tools you use dont have to be creating to account for this structure. Ensuring all functions input and output data in a wide ungrouped form enables the development of a suite of scalable and domain agnostic tools for the exploration, presentation and analysis of data. Inside the R programming language, the primary developers, RStudio, have pioneered the use of tidy analysis and created the tidyverse suite of packages to collate useful functions. Mimicking the tidy structure in the creation of tidyqpcr not only opens the way to flexible analysis enabled by simply following the tidy data paradigm, it also directly allows access to a plethora of open-access and scalable data analysis tools already created in the tidyverse. Once users familiarise themseves with the tidy paradigm, they can conduct advanced downstream analysis such as linear analysis, complex visualisation and statistical summarise. can scale upto 1534 wells 
-
 \subsection{MIQE-compliant results}
 
 tidyqpcr follows the MIQE-guidelines for analysis by allowing multiple normalising genes by default in the delta-Cq calculation. 
-Helper function for the design of serial dilutions plates for primer calibration are available together with functions to calculate linearity, R^2 and plots to display behaviour across multiple primers.
+Helper function for the design of serial dilutions plates for primer calibration are available together with functions to calculate linearity, $R^2$ and plots to display behaviour across multiple primers.
 Importing the fluorescence across all cycles is also available so that quality control graphs for the melt and amplification curves across all wells can be seen.
 There are also default functions to plot Cq values across the plate to see biases, such as edge well bias. 
 The vignettes also outline a replicable analysis pipeline so users can ensure they complete all the necessary checks and to standardise analysis so reviewers can check analysis.
