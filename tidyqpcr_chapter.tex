@@ -11,6 +11,44 @@
 \usepackage[brazil,english]{babel}
 \usepackage{graphicx}
 \usepackage{array}
+\usepackage{listings}
+
+\usepackage{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{1,1,1}
+
+\setlength{\tabcolsep}{20pt}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\scriptsize\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\scriptsize\color{codepurple},
+    basicstyle=\ttfamily\scriptsize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstdefinelanguage{tidyqpcr}
+{morekeywords={display_plate_value,calculate_efficiency_bytargetid,calculate_deltacq_bysampleid,calculate_deltadeltacq_bytargetid,create_blank_plate,label_plate_rowcol,create_colkey_4diln_2ctrl_in_24,create_rowkey_4_in_16,eleven,twelve,read_lightcycler_1colour_raw,calculate_drdt_plate,factor,rep,paste0,create_colkey_6_in_24,system.file, read_lightcycler_1colour_cq,left_join,mutate,bind_rows,unite,tibble,filter,group_by,summarize,median,ggplot,geom_point,aes,position_jitter,facet_wrap,scale_y_log10,label_number,theme,element_text,function,assert_that,has_name,pull,norm_function}
+sensitive=false,
+morecomment=[l]#,
+morestring=[b]",
+}
+\lstset{style=mystyle, language=tidyqpcr}
+
 
 \author{Sam Haynes}
 \title{User-Friendly, Open Source Research Software}
@@ -21,24 +59,64 @@
 \maketitle
 
 \begin{abstract}
-This chapter explores the development and improvement of an open source R package called tidyqpcr. The introduction discusses the motivation for creating a package that aids the design, analysis and presentation of qPCR assays. It introduces the growing issue with reproducing results based on qPCR data as well as the benefits of applying experimental design techniques to the planning of qPCR experiments. The decade old best practices for conducting and publishing qPCR experiments, the MIQE- guidelines are introduced. Finally, concerns around the dependence of close source, proprietary and untested Cq calculation algorithms used to across disciplines. Then, the results section first summarises the semi-structured interviews of several experimental biologists to discern current patterns in qPCR assay design and analysis. This provides the framework for a review of currently available software packages for the analysis of qPCR data. The chapter then introduces tidyqpcr and how its functions and detailed vignettes facilitate the block design of qPCR plates. How it integrates into a larger package ecosphere for advanced downstream analysis and outlines a flexible but regular analysis pipeline incorporating key QC steps. Finally, the chapter discusses how user interviews have helped expand and improve tidyqpcr.
-
+This chapter presents the development of tidyqpcr; an open source R package for the analysis of qPCR data.
+The introduction explores the need for improving the design, analysis and presentation of qPCR assays.
+The results section begins with an overview of currently available software packages which highlights the lack of a scalable analysis package that supports best practices in qPCR experimental design.
+Next, the core functionality of tidyqpcr is described together with the use of best software design practices.
+Finally, a series of user tests by researchers from a variety of backgrounds are summarised.
 
 \end{abstract}
 
 \section{Chapter 3 Introduction}
 
-The limitations of qPCR experiments have been widely reported but the same mistakes keep being made \cite{Burns2005}. In an effort to combat poor practices a team of qPCR experts created advice for publishing qPCR results (and implicitly the design of experiments) called the Minimum Information for the Publication of Quantitative Real-Time PCR Experiments (MIQE) guidelines \cite{Bustin2009}. They provide a thorough checklist of every detail that needs to be reported in order to enable another researcher to accurately repeat your work. Over time they even developed their own markup language, the Real-Time PCR Data Markup Language or RDML, to standardise the way scientists describe their experiments which users can upload to a bespoke open source database \cite{Lefever2009, Ruijter2015}.
-However, the guidelines have been around for 11 years but they are still not widely implemented or known about, with as little as $4\%$ of qPCR articles citing them \cite{AbdelNour2020}.
+Quantitative PCR is the most common technique for the quantification of DNA and RNA. 
+The specificity and sensitively of the assay, as described above \footnote{Introduction will contain an overview of RNA quantification methods: qPCR, RNA-seq and microarrays}, has led it to be considered the gold standard for nucleotide detection and quantification in medicine, legislation and academia \cite{Kubista2006}.
+However, qPCR experiments, especially assays requiring a reverse transcriptase step, are susceptible to several reliability issues if poorly designed \cite{Bustin2002}.
+Nevertheless, the widespread use of qPCR across distinct disciplines has enabled the creation of countless protocols, equipment and analysis methods without consistent standards \cite{Bustin2021}.
+The limitations and varying quality of qPCR experiments has lead to a reproducibility crisis with significant consequences for academic rigour \cite{Garson2009} and public health \cite{Bustin2013}. 
 
-In order to encourage the adoption of MIQE best practices across the analysis pipeline we have developed tidyqpcr, an R package that helps users create publication ready figures of normalised qPCR results straight from raw data. tidyqpcr packages the lessons outlined in the MIQE guidelines for the easy design, analysis and reporting of reproducible and accurate qPCR results. Well documented functions and intuitive structure help experts encapsulate required meta-data to enable reproducible research without depending on checklists. It has built in walkthroughs to enable PCR novices to learn qPCR design and analysis from best practices. We follow the FAIR principles - Findable, Accessible, Interoperable, and Reusable, to ensure every stage of the analysis is transparent and verifiable. tidyqpcr is available to use now and can be downloaded from our GitHub page, https://github.com/ewallace/tidyqpcr. We continue to add functionality to tidyqpcr in order to process data from a variety of qPCR assays and machines.
+In an effort to improve the reproducibility of qPCR results. a team of qPCR experts created guidelines for publishing qPCR results called the Minimum Information for the Publication of Quantitative Real-Time PCR Experiments (MIQE) guidelines \cite{Bustin2009}.
+They provide a thorough checklist of every detail that needs to be reported in order to enable another researcher to accurately repeat your work. 
+Over time they developed their own file format, the Real-Time PCR Data Markup Language or RDML, to standardise the way scientists describe their experiments which users can upload to a bespoke open source database \cite{Lefever2009, Ruijter2015}.
+Despite the guidelines have been around for over a decade, they are still not widely implemented with as little as $4\%$ of qPCR articles citing them \cite{AbdelNour2020}. 
 
-In this body of work, I describe the current available software for analysing qPCR data and setup the niche that tidyqcr successfully fills. I start my summarising a series of interviews with prospective users either experienced in qPCR experiments or beginning to conduct some. After showcasing the continued lack of reproducibility and quality control that is already outlined in the literature, I describe the current software packages available across several platforms. I then detail how the development of tidyqpcr has been focused on the possibility of using software development best practices to encourage the use of experimental best practices. Finally, I discuss how a series of user interviews have improved the usability and functionality of tidyqcr. I conclude with outline of the future of tidyqpcr and how it offers a solution to reproducibility and lessons learnt for the development of other research software. 
+qPCR assays are susceptible to multiple systematic biases. Positional effects can be a significant contribution to measured expression. Edge wells may be more likely to have some of their liquid evaporate away. Multichannel pipettes may consistently output lower/higher volumes out of specific tips. Thermal gradients may be uneven across the plate. Therefore, grouping biological/technical replicates so they are place in the neighbouring wells could lead to systematic effects confounding biological effects. This can compound even further if the same samples are place in the similar positions across multiple different wells. In an ideal situation, different samples and their replicates should be allocated entirely random well positions. However, if the sample loading is manual, then having inconsistent loading plans across plates can lead to incorrect loading. Ultimately, having an incorrect map of samples in wells is significantly more detrimental to any analysis than systematic bias. A balance between easy loading and good experimental design principles are required.
+
+TIDY PARADIGM
+
+The development of programming as a profession as supported the development of coding practices to enhance the efficiency and reliability of coding. The don't repeat yourself (DRY) paradigm is one of the most commonly implemented practices to encourage programmers to write shorter and specific functions to solve regularly occurring tasks. Minimising the number of repetitions helps reduce errors (simply from imperfect copying), improves readability and enables faster debugging as compartmentalising tasks into separate functions enables you to test each function separately. Similarly, with the maturation of data analysis as a profession practice to enhance the process of cleaning and analysis the data are being developed. Modularising the the analysis pipeline into repeated chunks, akin to the functional paradigm of DRY, has developed into a split-apply-combine paradigm. The problems that arise in data analysis are often a balance between efficiency and scalability. The split-apply-combine paradigm not only lends itself to the DRY mantra and the benefits of compartmentalising tasks but also enables parallelisation of data analysis tasks. Splitting large data sets into small chunk increases efficiency as modern processing hardware to built to handle several tasks at once. It also helps balance memory demands as data sets, particularly in biology, are regularly Gb or Tb in size. To supplement the programmatic paradigm of split-apply-combine, there is a broader idea of structuring data to minimise the manipulation, or wraggling, to fit into standardise analysis pipeline. The concept of 'tidy' data enforces are strict row and column structure to all data type ensuring data sets can be split into chunks of rows to be applied to. The columns as variables and rows as entries concept has long been established in the design matrices commonly implements in regression analysis, but is not a typical format for human-readable data sets because of its repetition of data. However, the ability to group entire data sets by their values in different columns allows you to conduct multiple analysis at the same time to explore different features. For example, with the same function to calculate the mean you can compare the average heights or the average ages of a population depending on how you group the data. 
+
+ The tidy data paradigm is an attempt to balance the requirements of machine readability and human readability in the tasks of data analysis. Consisting predominantly of shaping all data such that each column is a variable and each row an observation, otherwise known as long format. Unfortunately, data in the wild is often organised in wide format with observations and variables being spread across columns. An example would be counting the number of customers entering different shops on high street over a week. The columns in the survey might be: Week day, Deli, Bookshop, Bar and toy shop. Then each element in the table, except for the first column of days, would be the counts of customers in each shop on each day. However, this wide format prioritises human readability over machine readability with an intrinsic grouping to the counts variable that may require some thought to unpick. For easier programmatic analysis, there are three variables: day, shop, and count so there should only be three columns. Creating data structures without intrinsic grouping opens the door to more flexible analysis as the tools you use dont have to be created to account for this structure. Ensuring all functions input and output data in a wide ungrouped form enables the development of a suite of scalable and domain agnostic tools for the exploration, presentation and analysis of data.
+
+%DRY paradigm  https://en.wikipedia.org/wiki/The_Pragmatic_Programmer
+
+%Tidy data is an alternative name for the common statistical form called a %model matrix or data matrix.
+
+%Hadley Wickem paper on split-apply-combine
+%https://www.jstatsoft.org/article/download/v040i01/468
+
+%Hadley Wickem paper on tidy data
+%https://www.jstatsoft.org/article/download/v059i10/772
+
+%Finally, concerns around the dependence of close source, proprietary and untested Cq calculation algorithms used to across disciplines.
+
+%What is LOD and amp curve?
+
+We begin by outlining the continued need for better design and analysis of qPCR data through a series of interviews and a review of current software.
+tidyqpcr is then introduced as an R package that helps users create publication ready figures of normalised qPCR results straight from raw data. 
+tidyqpcr packages the lessons outlined in the MIQE guidelines for the easy design, analysis and reporting of reproducible and accurate qPCR results.
+Well documented functions and intuitive structure help experts encapsulate required meta-data to enable reproducible research without depending on checklists.
+The chapter ends by discussing recent improvements to the package due to a series of user tests and code review and future planned extensions to its functionality.
 
 \section{Chapter 3 Results}
 
 \subsection{Theme derived from semi-structured interviews}
-The six interviewees varied from experienced post-doctoral research assistants to undergraduates with experience in both both programming and conducting qPCR assays varying from novice to expert.
+
+These interviews where conducted over zoom with the video recorded by zoom's proprietary software over a period between 45 and 90 minutes. Software developers are often unaware of their own unconscious knowledge which may create a barrier for users to engage with user. Also, language differences between disciplines and non-native speakers can create obstacles.  The interview, outline in appendix A, was in two halfs: part one explored the users experience with qPCR assay, analysis and coding, part two consisted of a series of tasks based on the vignettes.  The questionnaire section explored whether users were aware of the MIQE-guideline and if they currently executed any QC measures. We also wanted to know the typical experiments users wanted to conduct: qPCR assay, machine, No of wells. Finally, we wanted to explore what software users currently used to analyse their results and if they were interested in learning R based analysis. The task-based section of the interview focused on three main themes of tidyqpcr: block based plate planning, tidyverse based API and conducting reproducible analysis.
+
+We conducted a series of semi-structured interviews to explore current practices in qPCR experimental design and analysis.
+The six interviewees varied in experience from post-doctoral research assistants to undergraduates some with experience in programming=based analysis and others in conducting qPCR assays.
+Several key themes appeared across the interviews, Figure \ref{fig:semi-structured-test-cloud}.
 Excel remains a common piece of software for the analysis of qPCR results and design of plates.
 The awareness of MIQE guidelines is remains relatively unknown.
 Users almost universally depend on qPCR machine software to determine qc values.
@@ -61,79 +139,75 @@ Few were aware of the concept of 'tidy' data outside of users already using R pa
 
 \subsection{Comparing current qPCR analysis software}
 
-Previous reviews \cite{Rodiger2015, Pabinger2014}
+qPCR analysis packages have been available across multiple platforms for decades and the fundamental principles of qPCR remain unchanged.
+Nevertheless, novel packages continue to be released to address the continued dissatisfaction with current analysis software.
+In the last two years, the use of qPCR in global response to the COVID-19 pandemic has driven the development of new packages to support the reliable detection of COVID-19.
+However, the last published review of qPCR analysis packages was \cite{Pabinger2014}.
+The review covered 27 different open source packages with the R package qpcR highlighted as the tool with the most comprehensive functionality.
+It also described the varying quality of documentation, lack of compliance with the MIQE guidelines, inconsistent input and output file formats, and the use of CLIs over GUIs across the reviewed packages.
+A review of qPCR analysis software released since \cite{Pabinger2014} is described below in order to A) determine the need for another qPCR analysis package and B) discern any generalisable changes in qPCR analysis software since the last review.
 
-Introducing RDML \cite{Rodiger2017}
-
-%Check for software:
-%- plate plan
-%- version
-%- release
-%- missing data interpolation
-%- normalisation
-%- auto-dection of normalising genes
-%- absolute or relative quantification
-%- plot melt/amp curves
-%- standard / efficiency calcs 
-%- efficiency in quant calc
-%- statistical analysis
-%- plotting results
-%- support for taqman probes
-
+A list of qPCR analysis software was gathered through searches on GitHub, bioconda, bioconductor, CRAN, and Google Scholar.
+All of the software packages reviewed are freely available for use and are open source.
+The majority of the packages were released after the previous published review.
+However, HTqPCR, qpcR, ReadqPCR, and NormqPCR are included for completion as they are dependencies for several of the newer packages.
+The packages are grouped according to their primary usage: Web Apps require a server and typically provide a website for users to conduct analyses,  R and Python packages primarily need to be downloaded and ran locally, and Misc requires other proprietary software. 
 
 \textbf{Web Apps}
 
-\textbf{QuantGenius} A standalone web-app for absolute quantification of target abundance with quality control. The analysis pipeline uses standard curves to determine target abundance, checks copy number and summarises multiple QC steps in the final view to aid users in determining significant results. It uses a PHP backend to conduct the analysis.   \cite{Baebler2017}
+\textbf{QuantGenius} A PHP web-app published in Feb 2017 for the quantification of target abundance using standard curves. Users manually copy Cq values for each target into the GUI and can export results as a .csv or .xls file. The app automatically highlights samples that are outliers, are outside the LOD or have poor efficiency, but does not check melt/amplification curves. It does not contain any functions for conducting statistical analyses or for producing graphs. QuantGenius has not been updated since publication \cite{Baebler2017}.
 
-\textbf{ELIMU-MDx} Web-based elixer tool for the storage and anlysis of clinical qPCR data. Uses RDML to store qpcr machine agnostic metadata and results. Able to deduce relative and absolute target abundance.  \cite{Krahenbuhl2019}
+\textbf{ELIMU-MDx} A PHP web-app published in Oct 2019 for the storage and analysis of clinical qPCR data. The app extracts Cq values from the input RDML file and stores results as an RDML file. The PHP backend is able to deduce relative and absolute abundance as well as detecting samples that are outliers, are outside the LOD or have poor efficiency. Users need to set up their own apache or nginx server to run analyses and store the database. It does not contain any functions for conducting statistical analyses or for producing graphs. ELIMU-MDx was last updated in Dec 2020 \cite{Krahenbuhl2019}.
 
-\textbf{shinyCurves} R Shiny web-based app for assay agnostic detection of COVID-19. Accepts excel spreadsheet inputs from qPCR machines and determines if samples are Positive, Negative or Undetermined depending on user defined thresholds. Users can conduct QC too by viewing melt curve plots and amplification curve plots. \cite{OlaecheaLazaro2021}
+\textbf{PIPE-T} An extension to the Galaxy web-based bioinformatics platform published in Oct 2019 for the relative quantification of qPCR data. It accepts Cq values for each sample/replicate/condition as separate tsv files and outputs tsv files. The extension facilitates a variety of Cq normalisation methods, mainly provide through the R package HTqPCR. QC can be conducted by flagging samples with Cq levels outside user defined thresholds, but no melt/amplification curves are available. There are also functions to test for significant differential expression in two condition experiments and to impute missing data. PIPE-T has not been updated since publication \cite{Zanardi2019}.
 
-\textbf{PIPE-T} An extension to the Galaxy web-based bioinformatics platform released in Oct 2019. PIPE-T provides a Galaxy interface for several R based qPCR analysis packages to enable users to chain multiple analysis steps; missing data interpolation, normalisation, and inferring differential expression, without needing to learn to program in R. Flags Cq values with poor quality. It conducts relative quantification but not absolute quantification. Raw Cq values need to be pre-processed so that each sample/replicate/condition is in a separate tab separated text file.  This tool depends heavily on the R packages HTqPCR, NormqPCR described below. \cite{Zanardi2019}
+\textbf{SATqPCR} A standalone web-app published in Aug 2019 for the relative quantification of qPCR data. It accepts up to two tab separated text files as input: one contains a table of Cq values and primer efficiencies with columns representing different genes and rows representing samples, the other optional file relates samples to different factors for t-test or anova statistical tests. It outputs summary statistics and normalised Cq values in txt files and as bar charts in png format. The software cannot calculate primer efficiencies but, if efficiencies are provided by the user, it can use primer efficiencies in the relative quantification calculation. It does not have any functionality to plot melt/amplification curves, detect outliers or interpolate missing data. The app does contain an algorithm to automatically detect the most stable genes and use them as normalising genes. The app is an update to a previous R package called RqPCRAnalysis, but has not been updated itself since publication. \cite{Rancurel2019}.
 
-\textbf{SATqPCR} A standalone web-app. Can use primer efficiency in relative quantification count but does not have the functionality to calculate efficiencies from calibration curves. Cannot visualise melt/amp curves. (Rancurel wt al 2019). Raw Cq values need to be pre-processed so that each gene has its own column and the first column has sample name in specific format. Automatically detects most stable genes to use as normalisation genes. Allows t-test and anova statistical tests. Does not detect outliners or missing data interpolation \cite{Rancurel2019}. Based on an R package RqPCRAnalysis (see below).
 
-\textbf{Auto-qPCR} A standalone web-app with Python back-end for the relative and absolute quantification of qPCR data. Users can download the python code to run the app locally. v1 was released in Aug 2020. (Maussion 2021). Enables user-defined multi-reference gene normalisation, outlier identification and up to 2 way anova (for parametric and non-parametric). Does not calculate efficiency or standard curve. \cite{Maussion2021}
+\textbf{Python packages}
 
-\textbf{Chainy} R Shiny web-based app for the relative quantification of targets with efficiency (can calculate efficiency with raw data). Accepts multiple file formats as input: RDML or vender specific outputs. Automatic selection of reference genes (using NormqPCR). Does not remove outliers or conduct missing data interpolation. Can plot amplification and melt curves. Permutation test to fold change significance. \cite{Mallona2017}
+\textbf{Auto-qPCR} A standalone web-app with Python back-end published in Oct 2021 for the relative and absolute quantification of qPCR data. It accepts a csv or txt input file with specific columns names, such as well, sample name, target name, and Cq value. It outputs txt files and bar charts in png format with normalised $\Delta$Cq, $\Delta\Delta$Cq or absolute copy number results. Users can download the python code to run the app locally or use the online server. The function for calculating relative Cq values does not include primer efficiency. The software does not process melt or amplification curves but uses a standard deviation cutoff for outlier identification. It also can conduct a 1 or 2 way anova to test for significance. Auto-qPCR has not been updated since publication \cite{Maussion2021}.
+
+\textbf{qpcr}
+A python package released in Aug 2021 for the relative quantification of qPCR data. It accepts csv and excel files in a variety of different formats to import different combinations of experiments, targets and samples. It outputs txt files and bar charts in jpg format with normalised $\Delta\Delta$Cq values. The software does not process melt or amplification curves but uses a standard deviation cutoff for outlier identification. It does not contain any functions for conducting statistical tests but can calculate primer efficiencies and use them in the $\Delta\Delta$Cq calculations. qpcr was last updated in Feb 2022 \cite{Kleinschmidt2022}.
 
 \textbf{R Packages}
 
-\textbf{LEMming} A published R script for the normalisation of qPCR data and detection of differential expression without the use of normalising genes. It proposes a linear error model for qPCR experiments and proposes steps to remove several sources of error by assuming the mean $C_t$ values within samples of similarly treated groups are equal. The script primarily depends on BioConductor ExpressionSets, base R linear regression functions and the limma R package. \cite{Feuer2015}
+\textbf{Chainy} An R Shiny web-based app published in May 2017 for the relative quantification of qPCR data. It accepts inputs in multiple forms including RDML files and several qPCR machine output files. It outputs a zip file of summary statistics and normalised Cq values in csv files and as bar charts in png format. The software can calculate Cq values and efficiencies directly from amplification curves or accepts pre-determined values. It can determine stable normalising genes using the NormqPCR package and flags outlying samples that do not fit the sigmoidal amplification curve. The app can also determine significant fold changes between samples using a permutation test. Chainy was last updated in Aug 2020 \cite{Mallona2017}.
 
-\textbf{pcr} An R package for the quantification of relative transcript abundance. Expects a table of Cq values with each row a different sample as input. Includes functions to conduct statistical tests from t-test to multiple linear regression, normalises to one reference gene. Contains functions to calculate efficiency and the standard curve. \cite{Ahmed2018}
+\textbf{shinyCurves} An R Shiny web-based app published in Oct 2021 for detecting viral infections from diagnostic qPCR assays. The app accepts excel spreadsheet inputs from BioRad and Applied Biosystems qPCR machines and outputs csv results. The plate designs are either 96 or 364 wells and users can flag control wells if they follow specific formats. It extracts Cq values from excel spreadsheets and determines if samples are Positive, Negative or Undetermined depending on user defined thresholds. It can quantify abundance using a standard curve if the input files contain serial dilutions. Users can conduct QC by viewing melt and amplification curve plots created by the R package qpcR and removing outliers.  It does not contain any functions for conducting statistical analyses. shinyCurves has not been updated since release \cite{OlaecheaLazaro2021}.
 
-\textbf{HTqPCR} R Bioconductor package for the relative quantification of qPCR data using S4 classes. Input is Cq across genes with each condition contained in separate tab-separated files. User can define outliers of replicates. No automatic reference gene selection but quantile means can be used. Does not plot melt/amp curves. Can test significance with linear models or t-tests. \cite{Dvinge2009}
+\textbf{LEMming} An R script published in Sept 2015 for the relative quantification of qPCR data. It proposes a linear error model for qPCR experiments which it uses to normalise Cq values without the use of normalising genes. This method cannot distinguish between the global treatment effect and some systematic errors. Therefore, if normalising genes have been verified, the standard $\Delta$Cq method is recommend. It requires an R data.frame of Cq values as input and creates an R S4 class object as output. It does not conduct any standard QC checks such as plotting amplification curves or checking for outliers.  It does include how to conduct several different differential expression tests. LEMming has not been updated since release \cite{Feuer2015}.
 
-\textbf{NormqPCR}  R Bioconductor package for the relative quantification of qPCR data using S4 classes. Encapusalates the geNorm function widely used to select reference genes with steady expression. Outliers removed with manual thresholds. Cannot plot melt/amp curves. \cite{Perkins2012}
+\textbf{pcr} An R package published in May 2018 for the relative quantification of transcript abundance. It expects an R data.frame of Cq values as input with each row a different sample and each column a target gene. The package creates an R data.table of summary statistics and ggplot2 figures. If 100\% primer efficiency is assumed, it can calculate $\Delta$Cq. Else, it requires serial dilutions to create standard curves and deduce relative abundance. The package also includes functions to conduct t-tests, Wilcox tests  and ANOVA. However, it always normalises to one normalising gene. It does not conduct any standard QC checks such as plotting amplification curves or checking for outliers. However, if the assay includes serial dilutions then amplification efficiency can be checked before analysis. pcr was last updated in April 2020 \cite{Ahmed2018}.
 
-\textbf{qpcR} An R package for selecting the best sigmoidal model to fit to qPCR data for accurate determination of Cq values and PCR efficiency. It can detect sample outliers. It does not calculate relative or absolute abundances or conduct any significance analysis. \cite{Ritz2008}
+\textbf{HTqPCR} An R Bioconductor package published in Dec 2009 for the relative quantification of qPCR data. It requires Cq values in a R S4 class object as input, but contains several functions to convert common qPCR machine files into this form. It outputs normalised Cq values and summary statistics as an S4 class object as well as several plots. The software does not plot melt or amplification curves as QC, but does allow users to define thresholds to detect outliers. There are also functions to determine batch effects, spatial effects and hierarchical interactions across samples and experiments. It can normalise genes using the standard $\Delta$Cq method or, in the case of unreliable normalising genes, it can normalise by quantile means and rank-invariant normalising factors. The package also contains functions to test differential expression with linear models, Mann-Whitney test or t-tests. HTqPCR core functionality has not been changed in 10 years, but it is maintained by the R Bioconductor community \cite{Dvinge2009}.
+
+\textbf{ReadqPCR and NormqPCR} A pair of R Bioconductor packages published in July 2012 for the relative quantification of qPCR data. ReadqPCR contains functions for reading in raw Cq value files from several common qPCR machines. They output normalised Cq values and summary statistics as S4 class objects as well as several plots. The software does not plot melt or amplification curves, but outliers can be removed with user defined thresholds. NormqPCR can select reliable normalising genes and impute missing values. It does not contain any methods for detecting statistically significant differential expression. ReadqPCR and NormqPCR were last updated in July 2018 \cite{Perkins2012}.
+
+\textbf{qpcR} An R package release in 2008 for selecting the best sigmoidal model to fit to qPCR data for accurate determination of Cq values and PCR efficiency. It expects an R data.frame of fluorescence per Cq values as input and outputs plots and an S3 object with summary statistics. The package contains several methods to determine the model with the best fit which is then used to determine threshold Cq values and efficiency. It can detect sample outliers, calculate relative and absolute abundances, and plot summary data. qpcR was last updated in June 2018 \cite{Ritz2008}.
 
 \textbf{Misc}
 
-\textbf{Spreadsheet} Published guide for determining relative abundance using spreadsheet software. It provides steps starting from importing qpcr machine data determining significant differential expression. It does not include quality control measure or removal of outliers. \cite{Ng2021}
+\textbf{Spreadsheet} A guide published in Dec 2021 for standardising the use of spreadsheet software to determined relative abundance. It does not describe how to calculate primer efficiencies but does use them in the $\Delta$Cq calculations. It outlines the use of t-tests to determine statistical significant differences.  The guide does not process melt or amplification curves but suggests using a standard deviation cutoff for outlier identification. It does not suggest how to plot any summary statistics \cite{Ng2021}.
 
-\subsection{tidyqpcr}
 
-Our package, tidyqpcr, addresses the need for a qPCR analysis package that fully integrates with the user-friendly tidyverse, encourages the use of MIQE best-practice compliant experimental design, and provides detailed example analysis pipelines as R vignettes. Following the tidy data paradigm integrates tidyqpcr into the wider collection of data analysis packages provided by the tidyverse, while being accessible to novice users of R. Other open-source libraries for qPCR analysis are available with distinct aims. HTqPCR [@Dvinge:2009], ReadqPCR/NormqPCR [@Perkins:2012], and qpcR [@Spiess:2018] have similar and in some respects greater functionality than tidyqpcr, but follow object oriented approaches with specialised data objects. By contrast, pcr [@Ahmed:2018] aligns most closely with tidyqpcr but its function inputs are not tidy data frames. Although alternatives are available, tidyqpcr's aims and approach are distinct: to improve the quality of qPCR experiments from plate design to analysis, by exposing all data in a consistent tidy format that integrates with the tidyverse.
 
-\subsubsection{tidyqpcr aims}
+\subsection{tidyqpcr: Quantitative PCR Analysis in the tidyverse}
 
-\begin{itemize}
-    \item Empowering: tidyqpcr combines a free, open-source qPCR analysis R package with online teaching materials.
-    \item Reproducible: tidyqpcr scripts produce paper-ready figures straight from raw data with identical results across computers.
-    \item Flexible: tidyqpcr follows the 'tidy' data paradigm to ensure scalability and adaptability.
-    \item Best-practice compliant: tidyqpcr encourages standardised, reliable experimental design by prioritising MIQE-compliant best practices.
-\end{itemize}
+tidyqpcr addresses the need for a qPCR analysis package that empowers users to conduct reproducible and best-practice compliant analysis.
+It is intended to be flexible enough to analyse qPCR data from any nucleic acid source - DNA for qPCR or ChIP-qPCR, RNA for RT-qPCR, on any scale - 96, 384, 1536+ well plates.
+Currently tidyqpcr has functions that support relative quantification by the $\Delta Cq$ method, but not yet absolute quantification.
+A key component of tidyqpcr is its comprehensive documentation that teaches users how to use tidyqpcr and why it is designed this way.
+These openly accessible teaching materials empowers users to improve the entire qPCR experiment, from plate design to publication ready figures.
+The package follows the FAIR principles - Findable, Accessible, Interoperable, and Reusable, to ensure every stage of the analysis is transparent and verifiable. 
+tidyqpcr is available to use now and can be downloaded from our GitHub page, https://github.com/ropensci/tidyqpcr/.
+
 
 \subsubsection{tidyqpcr design principles}
 
-tidyqpcr can be used to analyse qPCR data from any nucleic acid source - DNA for qPCR or ChIP-qPCR, RNA for RT-qPCR. Currently tidyqpcr has functions that explicitly support relative quantification by the $\Delta Cq$ method, but not yet absolute quantification.
 
-
-\subsection{Flexible and scalable analysis}
-
-tidy data paradigm is an attempt to balance the requirements of machine readability and human readability in the tasks of data analysis. Consisting predominantly of shaping all data such that each column is a variable and a row is an observation, otherwise known as long format. Unfortunately, data in wild often is organised in a wide format with observations and variables being spread across columns. An example would be counting the number of customers entering different shops on high street over a week. The columns in the survey might be: Week day, Deli, Bookshop, Bar and toy shop. Then each element in the table would be the counts of customers in each shop on each day. However, this wide format prioritises human readability over machine readability with an intrinsic grouping to the counts variable that may require some thought to unpick. For easier programmatic analysis, there are three variables: day, shop, and count so there should only be three columns. Creating data structures without intrinsic grouping opens the door to more flexible analysis as the tools you use dont have to be creating to account for this structure. Ensuring all functions input and output data in a wide ungrouped form enables the development of a suite of scalable and domain agnostic tools for the exploration, presentation and analysis of data. Inside the R programming language, the primary developers, RStudio, have pioneered the use of tidy analysis and created the tidyverse suite of packages to collate useful functions. Mimicking the tidy structure in the creation of tidyqpcr not only opens the way to flexible analysis enabled by simply following the tidy data paradigm, it also directly allows access to a plethora of open-access and scalable data analysis tools already created in the tidyverse. Once users familiarise themselves with the tidy paradigm, they can conduct advanced downstream analysis such as linear analysis, complex visualisation and statistical summarise. can scale upto 1534 wells 
+\textbf{Flexible and scalable analysis} Within the R programming language, RStudio have pioneered the use of tidy analysis and created the tidyverse suite of packages to collate useful functions. Mimicking the tidy structure in the creation of tidyqpcr not only opens the way to flexible analysis enabled by simply following the tidy data paradigm, it also directly allows access to a plethora of open-access and scalable data analysis tools already created in the tidyverse, Figure \ref{fig:tidyverse-ecosystem}. Once users familiarise themselves with the tidy paradigm, they can conduct advanced downstream analysis such as linear analysis, complex visualisation and statistical summarise. can scale upto 1534 wells. 
 
 \begin{figure}[t]
 
@@ -141,12 +215,10 @@ tidy data paradigm is an attempt to balance the requirements of machine readabil
 
 }
 
-\caption{\textbf{Developing tidyqpcr using the tidyverse packages grants access to a larger ecosystem of data analysis packages.}}\label{fig:tidyverse_ecosystem}
+\caption{\textbf{Developing tidyqpcr using the tidyverse packages grants access to a larger ecosystem of data analysis packages.}}\label{fig:tidyverse-ecosystem}
 \end{figure}
 
-\subsection{Experimental design}
-
-qPCR machines are susceptible to multiple systematic biases. Positional effects can be a significant contribution to measured expression. Edge wells may be more likely to have some of their liquid evaporate away. Multichanel pipettes may consistently output lower/higher volumes out of sepcific tips. Thermal gradients may be uneven across the plate. Therefore, grouping biological/technical replicates so they are place in the neighbouring wells could lead to systematic effects confounding biological effects. This can compound even further if the same samples are place in the similar positions across multiple different wells. In an ideal situation, different samples and their replicates should be allocated entirely random well positions. However, if the sample loading is manual then having inconsistent loading plans across plates can lead to incorrect loading; i.e. the wrong sample in the wrong well. Ultimately, having an incorrect map of samples in wells is significantly more detrimental to any analysis than systematic bias. A balance between easy loading and good experimental design principles are required. In tidyqpcr, we have built several plate plan helper functions built around block designs. This enables samples to be spread across the plate and minimise well position biases but still contain regular patterns for loading with multi-channel pipettes. We also describe in detail different plate design strategies than user can explore depending on their particular pipettes and plates. Users can exclude loading samples into edge wells with the provided helper functions. We are also exploring introducing automatic generation of loading recipes for common liquid handlers so users with the access to the appropriate equipment can ensure the loader and plate plan match identically.
+\textbf{Experimental design}  In tidyqpcr, we have built several plate plan helper functions built around block designs. This enables samples to be spread across the plate and minimise well position biases but still contain regular patterns for loading with multi-channel pipettes, Figure \ref{fig:combined-plate-design}. We also describe in detail different plate design strategies that users can explore depending on their pipettes and plates. Users can exclude loading samples into edge wells with the provided helper functions. We are also exploring introducing automatic generation of loading recipes for common liquid handlers so users with the access to the appropriate equipment can ensure the loader and plate plan match identically.
 
 \begin{figure}[H]
 
@@ -157,26 +229,388 @@ qPCR machines are susceptible to multiple systematic biases. Positional effects 
 \caption{\textbf{tidyqpcr facilitates flexible, modular plate design.} \textbf{(A)} Single repeatable block containing important well information: Sample\_id, target\_id, RT and bio\_rep number. \textbf{(B)} Alternative plate design with alternate sample replicates. Useful for pipetting with multi-channel pipettes. \textbf{(C)} Full 96 well plate design based on the repeatable block of panel \textbf{A}. Shows a MIQE-compliant plate with 3 technical replicates, 2 biological replicates and -RT controls.} \label{fig:combined-plate-design}
 \end{figure}
 
-% Q. Liu and M. Markatou, 2016, Evaluation of Methods in Removing Batch Effects on RNA-seq Data, Infectious Diseases and Translational Medicine
 
-% Schurch et al, 2016 many replicate RNA sequencing
-
-\subsection{MIQE-compliant results}
-
-tidyqpcr follows the MIQE-guidelines for analysis by allowing multiple normalising genes by default in the delta-Cq calculation. 
-Helper function for the design of serial dilutions plates for primer calibration are available together with functions to calculate linearity, $R^2$ and plots to display behaviour across multiple primers.
-Importing the fluorescence across all cycles is also available so that quality control graphs for the melt and amplification curves across all wells can be seen.
+\textbf{MIQE-compliant results} tidyqpcr follows the MIQE-guidelines for analysis by allowing multiple normalising genes by default in the delta-Cq calculation. 
+Helper functions for the design of serial dilutions plates for primer calibration are available together with functions to calculate linearity, $R^2$ and plots to display behaviour across multiple primers.
+Importing the fluorescence across all cycles is also available so that quality control graphs for the melt and amplification curves across all wells can be seen, Figure \ref{fig:plate-amp-curves}.
 There are also default functions to plot Cq values across the plate to see biases, such as edge well bias. 
-The vignettes also outline a replicable analysis pipeline so users can ensure they complete all the necessary checks and to standardise analysis so reviewers can check analysis.
-All vigenettes also describe the use of technical and biological replicates as well as control well with no reverse transcriptase in (for the case of RNA quantification.
+The vignettes also outline a reproducible analysis pipeline so users can ensure they complete all the necessary checks and to standardise analysis so reviewers can check analysis.
+All vignettes also describe the use of technical replicates, biological replicates and control wells that contain RNA samples without reverse transcriptase.
 
-\begin{itemize}
-    \item estimate differential expression across multiple samples by the $\Delta \Delta Cq$ method (calculate\_deltadeltacq\_bytargetid).
-    \item accelerate further downstream analysis and visualization by writing tidy data frames that are fully compatible with the tidyverse suite.
+\begin{figure}[t]
 
-\end{itemize}
+{\centering \includegraphics[width=1\linewidth]{figures/example_melt_and_curve_plots.png} 
 
-\subsubsection{User Interviews}
+}
+
+\caption{\textbf{Extensive vignettes teach users MIQE-compliant analysis.} \textbf{(A)} Amplification curve plots verifying that curves of the control samples without reverse transcriptase (dotted lines) do not overlap with the samples of interest \textbf{(B)} Melt curves showing double stranded DNA fragments become single stranded above the threshold temperature for samples of interest.} \label{fig:plate-amp-curves}
+\end{figure}
+
+%\begin{itemize}
+%    \item estimate differential expression across multiple samples by the $\Delta \Delta Cq$ method (calculate\_deltadeltacq\_bytargetid).
+%    \item accelerate further downstream analysis and visualization by writing tidy data frames that are fully compatible with the tidyverse suite.
+
+%\end{itemize}
+
+\subsubsection{Functionality}
+
+\textbf{Overview}
+tidyqpcr provides the functionality to aid with the implementation of qPCR assays from design to analysis. The design of complex plate plans is facilitated with the use of general plate formatting and labelling functions such as \lstinline{label_plate_rowcol}, \lstinline{create_blank_plate}. Meanwhile, helper functions that create commonly used 96 and 364 well plates are provided: \lstinline{create_colkey_4diln_2ctrl_in_24} and \lstinline{create_rowkey_4_in_16}. Once the plate has been design user can the import the completed qPCR assay data straight from the raw qPCR machine output. There are default functions for imported light cycler data \lstinline{read_lightcycler_1colour_raw} but users can custom design functions to import from other machines as long as the end dataframe is in a tidy format. The import functions can be used to import threshold Cq values calculated from the qPCR  machine or the Cq values across cycles for the entire timecourse.  There are functions to conduct quality control on the imported data, as required by the MIQE guildelines. \lstinline{calculate_drdt_plate} calculates the derivative of the melt curve enabling the user to confirm amplification occurs only at one temperature. Plate effects such as reducing efficiency at edge wells can be inspected using \lstinline{display_plate_value}. Before the experiment of interest can be conducted the amplification efficiency of the primers must be tested in order to ensure the assumptions of the qPCR threshold Cq comparisons are valid. \lstinline{calculate_efficiency_bytargetid} enables users to calculate primer efficiency across targets given appropriate dilution qPCR assay data. Finally, on the completion of the quality control steps user can calculate deltaCq and deltadeltaCq values from any combination of samples and target using \lstinline{calculate_deltacq_bysampleid} and \lstinline{calculate_deltadeltacq_bytargetid}. The mechanics around calculating deltacq across replicates and plates is enable through the key words \lstinline{sample_id} and \lstinline{target_id}. Both words are necessary in the plate data.frame in order to use tidyqpcr functions. The decision to name them \lstinline{sample_id} and \lstinline{target_id} was a balance between being specific enough to avoid ambiguity, but general enough to enable a variety of qPCR assays to be incorporated.  
+
+\textbf{Use Case}
+
+An example use case is now described to show the power of tidyqpcr to analysis complex 96 well qPCR assay. The data set is a real assay inspecting the change in expression of 16 gene associated with stress response as yeast samples are to heat shock in the prescence of transcriptional inhibitors. The two transcriptional inhibitors are Phenanthroline and Thiolutin. Therefore, there are six conditions: no inhibitor present with and without heat shock, Phenanthroline with and without heat shock, and Thiolutin with and without heat shock. There are three technical replicates, two experimental replicates and each sample has a control which has not had any reverse transcriptase added. The example code will design the plate for this experiment, read in the results of the Roche LightcyclerqPCR machine and calculate normalised Cq values for all target-condition combinations.
+
+The first stage of conducting a qPCR experiment with tidyqpcr involves the designing a plate with the \lstinline{label_plate_rowcol} function. It requires three data.frame arguments: a blank plate data.frame holding the shape and number of wells to be used, a rowkey data.frame holding row-wise experimental meta data and a colkey data.frame holding column-wise experimental meta data. The blank plate data.frame can be any custom shape or size and follow any labelling system as long as each column and row is uniquely identifiable. tidyqpcr does provide boilerplate 96, 384 and 1024 well plates. The rowkey data.frame is regularly shown to hold \lstinline{target_id} data in the tidyqpcr examples so entire rows contain the same primer. Meanwhile, the colkey data.frame is regularly shown to hold sample data so technical replicates and controls are grouped together. Typically, designing the rowkey is a simple task. In this example there are the same number of rows as \lstinline{target_id}'s so the mapping is one to one. In other cases, if the number of \lstinline{target_id}'s is a factor of the number of rows then the \lstinline{target_ids} are replicated until all rows are filled. This pattern is an easy way of introducing biological replicates onto a plate. Designing the colkey can be more complicated as different combinations of conditions, replicates and controls need to be included. Similar to the rowkey, if the number of unique samples is a factor of the number of columns then they can be repeated in blocks to represent the technical replicates and -rt control. Although it is not strictly necessary to use \lstinline{label_plate_rowcol} to create a plate, we designed the function to encourage the users to design the plate in a logical row-wise and column-wise manner. This leads to a intuitive and reproducible method to load the plate which minimises mistakes and increase efficiency. 
+
+\begin{center}
+\begin{tabular}{ |p{5.6cm}  p{5.6cm}|}
+\hline
+  \begin{lstlisting}
+# list target_ids of primer sets
+target_id_levels <- c("HOR7",
+   "HSP12", "HSP26", "HSP78",
+   "HSP104", "RTC3", "SSA4",
+   "PGK1", "ALG9", "HHT2",
+   "HTB2", "RPS3", "RPS13",
+   "RPS15", "RPS30A", "RPL39")
+
+# Set up experimental samples
+heat_levels <- c("-", "+")
+heat_values <- factor(
+   rep(heat_levels, each = 3),
+   levels = heat_levels)
+drug_levels <- c("C", "P", "T")
+drug_values <- factor(
+   rep(drug_levels, times = 2),
+   levels = drug_levels)
+condition_levels <- paste0(
+   drug_levels,
+   rep(heat_levels, each = 3))
+\end{lstlisting}
+ & 
+ \begin{lstlisting}[firstnumber=20]
+condition_values <- factor(
+   condition_levels,
+levels = condition_levels)
+ 
+# create plate plan
+rowkey <- tibble(
+   well_row = LETTERS[1:16],
+   target_id = factor(target_id_levels, 
+    levels = target_id_levels))
+
+colkey <- create_colkey_6_in_24(
+   heat = heat_values,
+   drug = drug_values,
+   condition = condition_values)
+
+plateplan <- label_plate_rowcol(
+   create_blank_plate(
+      well_row = LETTERS[1:16],
+      well_col = 1:24),
+   rowkey, colkey)
+\end{lstlisting} \\ 
+\hline
+\end{tabular}
+\end{center}
+After the qPCR experiment has been conducted, the next step is to read in the results. The function \lstinline{read_lightcycler_1colour_cq} is the default function in tidyqpcr for reading in the calculated threshold Cq values held in the excel file format used by Roche Lightcyclers. The complementary function \lstinline{read_lightcycler_1colour_raw} enables user to load the Cq values across the entire time course for plotting quality control figures. Users using qPCR machines other than a Roche Lightcycler currently need to create their own function for reading in Cq data. The plate plans defined above can then quickly match the Cq values with the sample meta data. It is vital that the row and column labelling used by the qPCR machine is repeated correctly in the plate design data.frame. As it can be seen in the example code, the scalability of tidyverse functions enables tidyqpcr to easy incorporate multiple experimental replicates without significant changes in the pipeline.
+\begin{center}
+\begin{tabular}{|p{5.6cm}  p{5.6cm}|}
+\hline
+ \begin{lstlisting}[firstnumber=40]
+ file_path_cq_plate1 <- 
+    system.file("extdata",
+      "Edward_qPCR_TxnInhibitors_
+         HS_2018-06-15_
+         plate1_Cq.txt.gz",
+      package = "tidyqpcr")
+
+plate1 <- file_path_cq_plate1 %>%
+read_lightcycler_1colour_cq() %>%
+   left_join(plateplan,
+      by = "well") %>%
+   mutate(biol_rep = "1",
+      plate = "1")
+
+file_path_cq_plate2 <-
+   system.file("extdata",
+   "Edward_qPCR_TxnInhibitors_
+      HS_2018-06-15_
+      plate2_Cq.txt.gz",
+   package = "tidyqpcr")
+\end{lstlisting} &
+\begin{lstlisting}[firstnumber=60]
+plate2 <- file_path_cq_plate2 %>%
+read_lightcycler_1colour_cq() %>%
+  left_join(plateplan,
+     by = "well") %>%
+  mutate(biol_rep = "2",
+     plate = "2")
+
+# combine data from both plates into a single data frame
+plates <- bind_rows(plate1,
+   plate2) %>%
+  unite(sample_id, condition,
+     biol_rep, sep = "",
+     remove = FALSE)
+\end{lstlisting} \\
+\hline
+\end{tabular}
+\end{center}
+
+Finally, to complete this example analysis the function \lstinline{calculate_deltacq_bysampleid} will normalise all the Cq values from the targets of interest to the normalising genes. Following the MIQE guidelines,  this function can accept multiple normalising \lstinline{target_ids} and calculate a mean or median value to subtract from all targets of interest. Again, using the flexibility of the tidyverse the mean Cq across any combination of samples, replicates and experiments can be calculated. This is possible because tidyqpcr consistently follows the tidy paradigm across all function outputs. The comparison of expression across all conditions and targets is plotted using ggplot2, Figure \ref{fig:tidyverse-ecosystem}.
+
+\begin{center}
+\begin{tabular}{| p{5.6cm}  p{5.6cm} |}
+\hline
+ \begin{lstlisting}[firstnumber=70]
+ platesnorm <- plates %>%
+  filter(prep_type == "+RT") %>%
+  calculate_deltacq_bysampleid(
+     ref_target_ids = "PGK1")
+
+platesmed <- platesnorm %>%
+  group_by(sample_id, condition, biol_rep, heat, drug, target_id) %>%
+  summarize(
+    delta_cq = median(delta_cq,
+       na.rm = TRUE),
+    rel_abund = median(rel_abund,
+       na.rm = TRUE))
+ \end{lstlisting}& 
+ \begin{lstlisting}[firstnumber=83]
+ggplot(data = platesmed) +
+  geom_point(aes(x = target_id,
+     y = rel_abund, 
+     shape = biol_rep,
+     colour = drug),
+    position = position_jitter(
+       width = 0.2,
+       height = 0)) +
+  facet_wrap(~heat, ncol = 3) +
+  scale_y_log10("mRNA relative detection",
+     labels = scales::label_number()) +
+  theme(axis.text.x = 
+     element_text(angle = 90,
+        vjust = 0.5))
+\end{lstlisting}   \\
+\hline
+\end{tabular}
+\end{center}
+
+\begin{figure}[t]
+
+{\centering \includegraphics[width=\linewidth]{figures/example_normalised_deltacq_multiplate_figure}}
+
+\caption{\textbf{tidyqpcr can be used to quickly analyse multi-plate, multi-target, and multi-sample qPCR assays. }}\label{fig:tidyqpcr-multi-plate}
+\end{figure}
+
+\textbf{Function definitions and Documentation}
+
+tidyqpcr functions are designed following the tidyverse guildlines for compatible functions. The verb-object nonmenclemature is followed throughout to help ensure each function is clearly named according to its purpose. The first argument of any tidyqpcr function is the primary data.frame to be acted on. This allows the pipe operators commonly used in tidyverse code to continue their primary function. The input data.frame is expected to be in the long tidy format and the outputs of any tidyqpcr function is also a data.frame in long tidy format. The definition of the \lstinline{calculate_deltacq_bysampleid} function has been copied below as an example of a typical function code. The function groups cq values by \lstinline{sample_id} and subtracts the normalising \lstinline{target_id} values from all cq value in each group. Therefore, cq, \lstinline{sample_id}, and \lstinline{target_id} are vital variables and are checked to be in the supplied data.frame before the function attempts to calculate deltacq. Once the presents of the required variables is asserted, the function calculates deltacq and add its as a new variable to the data.frame. The function is entire scalable as the internal \lstinline{group_by} functions can handle any number of \lstinline{sample_id} and the deltacq's can be calculated by any number of normalising \lstinline{target_ids}.
+
+
+
+\begin{center}
+\begin{tabular}{| p{5.6cm}  p{6.1cm} |}
+\hline
+\begin{lstlisting}
+calculate_deltacq_bysampleid <- 
+ function(cq_df,
+          ref_target_ids,
+          norm_function = median) 
+{
+
+ assertthat::assert_that(
+  assertthat::has_name(
+   cq_df, 
+   c("target_id",
+     "sample_id",
+     "cq")))
+     
+ cq_df %>%
+  dplyr::group_by(
+   .data$sample_id) %>%
+\end{lstlisting} &
+
+\begin{lstlisting}[firstnumber=17]
+   dplyr::do(
+    calculate_normvalue(
+     .data,
+     ref_ids = ref_target_ids,
+     value_name = "cq",
+     id_name = "target_id",
+     norm_function = 
+      norm_function)) %>%
+  dplyr::rename(
+   ref_cq = 
+    .data$value_to_norm_by) %>%
+      dplyr::ungroup() %>%
+      dplyr::mutate(
+       delta_cq = 
+        .data$cq - .data$ref_cq,
+       rel_abund = 
+        2^ -.data$delta_cq)}
+\end{lstlisting} \\
+\hline
+\end{tabular}
+\end{center}
+Preceding the function definition is a several commented lines detailing the use cases of the function. A brief description of the function, its input arguments and expected output is provided. The dependencies on other functions both inside tidyqpcr and inside other R packages are also listed. Finally, short examples showing the use of the function are outlined. This preamble is converted into markdown formatted help documentation by the r package roxygen2. This documentation is accessible once tidyqpcr has been load in r using the base help command and as a standalone documentation website hosted by ropensci.
+\begin{center}
+\begin{tabular}{| p{6.1cm}  p{5.6cm} |}
+\hline
+\begin{lstlisting}
+#' Calculate delta cq to normalize 
+#, quantification cycle (log2-fold)
+#' data within sample_id.
+#'
+#' This function implements 
+#' relative quantification by the 
+#' delta Cq method. For each 
+#' sample, the Cq values of all 
+#' targets (e.g. genes, probes, 
+#' primer sets) are compared to 
+#' one or more reference target 
+#' ids specified in 
+#' `ref_target_ids`.
+#'
+#' @param cq_df a data frame 
+#'  containing columns `sample_id`,
+#'  value_name (default `cq`) and
+#'  tid_name (default `target_id`).
+#'  Crucially, sample_id should be
+#'  the same for different technical
+#'  replicates measuring identical 
+#'  reactions in different wells of 
+#'  the plate, but differ for 
+#'  different biological and 
+#'  experimental replicates. See 
+#'  tidyqpcr vignettes for examples.
+#' @param ref_target_ids names of 
+#'  targets to normalize by, i.e. 
+#'  reference genes, hydrolysis 
+#'  probes, or primer sets. This can 
+#'  be one reference target id,
+#'  a selection of multiple target
+#'  ids, or even all measured 
+#'  target ids. In the case of all 
+#'  of them, the delta Cq value 
+#'  would be calculated relative to
+#'   the median (or other 
+#'  `norm_function`) of all measured 
+#'  targets.
+#' @param norm_function Function to 
+#'  use to calculate the value to
+#'  normalize by on given scale. 
+#'  Default is median, alternatively 
+#'  could use mean.
+#'
+#' @return data frame like cq_df 
+#'  with three additional columns:
+#'   ref_cq,  cq value for reference 
+#'            target ids;
+#'   delta_cq,  normalized value;
+#'   rel_abund, normalized ratio.
+\end{lstlisting} &
+\begin{lstlisting}[firstnumber=52]
+#' @export
+#' @importFrom tidyr %>%
+#' @importFrom stats median
+#' @importFrom rlang .data
+#' @examples
+#' # create simple cq dataset 
+#' # with two samples, two 
+#' # targets  and 3 reps
+#'
+#' cq_tibble <- tibble(
+#'  sample_id = rep(
+#'   c("S_1", "S_1", "S_1", 
+#'     "S_2", "S_2", "S_2"),
+#'     2),
+#'  target_id = rep(
+#'   c("T_1",
+#'     "T_norm"),
+#'   each = 6),
+#'  tech_rep = rep(1:3, 4),
+#'  well_row = rep(
+#'   c("A", "B"),
+#'   each = 6),
+#'  well_col = rep(1:6, 2),
+#'  well = paste0(well_row,
+#'                well_col),
+#'  cq = c(10, 10, 10, 12,
+#'         12, 11,  9,  9, 
+#'          9,  9,  9,  9))
+#'                      
+#' # calculate deltacq using
+#' # reference target_id 
+#' # called 'T_norm'
+#' 
+#' # use case 1: 
+#' # median reference 
+#' # target_id value
+#'
+#' cq_tibble %>%
+#'  calculate_deltacq
+#'       _bysampleid(
+#'    ref_target_ids = "T_norm")
+#' 
+#' # use case 2: 
+#' # mean reference target_id 
+#' # value 
+#'
+#' cq_tibble %>%
+#'  calculate_deltacq
+#'           _bysampleid(
+#'   ref_target_ids = "T_norm",
+#'   norm_function = mean)
+\end{lstlisting} \\
+\hline
+\end{tabular}
+\end{center}
+\newpage
+\textbf{Tests}
+
+tidyqpcr follows software development best practices by incorporating unit tests for all vital functions within the package. 95\% of all functions within tidyqpcr are covered by a test. The development on tidyqpcr uses the continuous integration support available in GitHub as a GitHub Action runs every unit test to check for bugs with every commit to the repository. The tests consist of small use cases with the simplest expected outcome from each function is created and compared to the actual output. Functions with multiple possible behaviours according to optional arguments have multiple tests ensure function logic performs as expected. Creating function tests is an example for when the DRY principle is counterproductive. As a correctly design suite of test are intended to help catch bugs during the development stage repeating how input arguments are defined within each test help speed the diagnosis process. Abstracting error messages and test to the shortest, most general form can invalid their usefulness in diagnosing bugs.
+
+\begin{center}
+\begin{tabular}{| m{10cm} |}
+\hline
+\begin{lstlisting}
+test_that("Unit test for the calculate_deltacq function",
+{
+   simulated_48_well_plate_plan <- create_blank_plate_96well() %>%
+      dplyr::filter(well_row %in% c("A", "B",
+                                    "C", "D")) %>%
+      dplyr::mutate(
+         target_id = rep(c("Target_1", "Target_2",
+                           "Target_3", "Target_4"),
+                         each = 12),
+         sample_id = rep(rep(c("Sample_1", "Sample_2",
+                               "Sample_3"),
+                             each = 4),
+                         times = 4),
+         tech_rep = rep(c(1, 2, 3, 1),
+                        times = 12),
+         prep_type = rep(c("+RT", "+RT",
+                           "+RT", "-RT"),
+                         times = 12))
+
+   calculated_48_well_plate_with_deltacq <- 
+      calculate_deltacq_bysampleid(
+         simulated_48_well_plate_with_cq %>%
+            dplyr::filter(prep_type == "+RT"), 
+         ref_target_ids = "Target_3") %>%
+            dplyr::arrange(well_row, well_col)
+
+    expect_equal(calculated_48_well_plate_with_deltacq,        
+                 simulated_48_well_plate_with_deltacq)})
+\end{lstlisting} \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsubsection{User interviews}
 We have conducted a series of user interviews to improve tidyqpcr's capabilities and documentation.
 
 \begin{center}
@@ -199,15 +633,28 @@ We have conducted a series of user interviews to improve tidyqpcr's capabilities
 \end{tabular}
 \end{center}
 
-\subsubsection{rOpenSci Review}
+\subsubsection{Code reviews}
+In order to ensure tidyqpcr followed best software development practices and verify the reliablity of its functions, we submitted the package for an rOpenSci code review. 
+rOpenSci offers transparent, constructive and open reviews of R packages that lower barriers to working with local and remote scientific data sources.
+A successful rOpenSci review also enables submission to JOSS, enabling the software development work to be officially acknowledged with citation.
+The comments improved tidyqpcr's functionality in handling plate edge effects by enabling users to define plates with empty wells and to visualise well Cq values.
+Their expertise helped prepare package for submission to CRAN by reducing package size to below 5Mb.
+The reviews also highlighted issues with accessing internal package data sets and suggested fix.
+We were encouraged to clarify tidyqpcr functionality when compared other available packages.
 
-\begin{itemize}
-    \item rOpenSci offers transparent, constructive and open reviews of R packages that lower barriers to working with local and remote scientific data sources.
-    \item Successful rOpenSci review also enables submission to JOSS, enabling the software development work to be officially acknowledged with citation.
-    \item Improved tidyqpcr's functionality in handling plate edge effects by enabling users to define plates with empty wells and to visualise well Cq values.
-    \item Prepared package for submission to CRAN by reducing package size to below 5Mb.
-    \item Highlighted issues with accessing internal package data sets and suggested fix.
-    \item Enhanced comparison of tidyqpcr functionality with other available packages.
-\end{itemize}
+\subsubsection{Future functionality}
+
+tidyqpcr is already a fully self-sufficient package for the analysis of qPCR data acquired from single probe Roche Lightcycler qPCR machines. There remains several planned improvements to enable tidyqpcr to easily analyse data from other qPCR assays and major additions to complete its aim to analyse qPCR data in an entirely open way according to MIQE practices. First, to extend the import functions to read formats from other qPCR machines we intend to incorporate the plater R package. This package follows the same tidy data principles as tidyqpcr, but is built to read data formats from a variety of qPCR machines. Next, currently tidyqpcr has only been tested to work on single probe qPCR assay. Taqman based qPCR assays allow multiplexing so each well can measure multiple targets in the same sample. Acquiring suitable taqman data and add documentation on how tidyqpcr can be used to analysis such assays would also lead to addition functionality. 
+
+The previous improvements enhance the use cases of tidyqpcr, but to complete the MIQE-compliant, open source analysis of qPCR data tidyqpcr needs to calculate threshold Cq values itself, provide methods to determine appropriate normalising genes, and include primer efficiency into delta Cq calculations. The R package NormqPCR already contains the functionality to determine appropraite normalisation factors to determine deltaCq values from a group of normalising genes. geNorm is an established method for incorporating primer efficiency into Cq values and replicating its functionality within the \lstinline{calculate_normvalue} is a priority. tidyqpcr needs remove its reliance on the threshold Cq value calculations conducted by proprietary software in qPCR machines. There are multiple methods to determine threshold Cq values the majority are available within the qpcR R package described above. Integrating the comprehensive functions in qpcR in a tidy format usable by tidyqpcr should complete the final requirement from tidyqpcr's statement of intent. 
+
+\section{Chapter 3 Conclusion}
+
+qPCR remain one of the most widely used microbiology assays with uses across disciplines. The implementation of best practices is the exception not the rules with varying awareness of what is required for someone else to repeat an experiment. Solutions have been widely published, with the MIQE guidelines as the gold standard, but the publications that follow them are in the minority. This due to a lack of awareness and the effort required to report protocols, analysis and results in an open way. The consequences of the lack of reproducibility continues to have a detrimental effect on the quality and reliability of conclusion based on qPCR data. In summary, there remains a serious demand for methods that support and teach the best practices in qPCR assay design and analysis.
+
+Here we have described an R package tidyqpcr which aims to facilitate the analysis of qPCR data in an open, reproducible and reliable way. Use best practices in open source software development, the expansive tidyverse data analysis distribution and the MIQE guidelines we believe this tool can help experimentalists improve the quality of their analysis and the confidence in their results. Surveying the current qPCR analysis software landscape it is clear that there remains a gap in scaleable, reproducible, and MIQE-compliant analysis package that is accessible for novice programmers. We exploited the full suite and documentation pathways available in R packages to enable users to access the required level of detail for them to achieve their goals. Step-by-step workflows are provide in detail in the vignettes with specific reference to the MIQE guidelines and experimental plans that include controls, replicates, and block designs. More experienced programmers can take advantage of the complete function documentation to cherry pick the steps they required and combine with the plethora of tidyverse packages to create bespoke pipelines of their own. It is the authors hope that the extensive work put into ensure the package is an open and accessible as possible will manifest into users contributing their own improvements and functions to the package. We believe this package has the promise to benefit the wider research community as the initial response from users outside of our lab have been overwhelming positive.
+
+%\bibliographystyle{sbc}
+%\bibliography{sbc-template}
 
 \end{document}
